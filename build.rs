@@ -65,12 +65,12 @@ fn get_llvm_libdir() -> String {
 
 fn main() {
     let target = env::var("TARGET").expect("TARGET was not set");
+    let cross_sysroot = env::var("CROSS_SYSROOT");
 
     let mut build = cc::Build::new();
 
     if target.contains("darwin") {
         build.flag("-stdlib=libc++");
-        let cross_sysroot = env::var("CROSS_SYSROOT");
         if let Ok(cross_sysroot) = cross_sysroot {
           build.flag(&format!("-isysroot{}", cross_sysroot));
           build.include(&cross_sysroot);
@@ -84,16 +84,18 @@ fn main() {
 
     build.file("src/c/llvmgcov.cpp");
 
-    for include in get_llvm_includedir() {
-        build.include(include);
-    }
+    if env::var("CROSS_SYSROOT").is_err() {
+        for include in get_llvm_includedir() {
+            build.include(include);
+        }
 
-    println!("cargo:rustc-link-search=native={}", get_llvm_libdir());
-    for lib in get_llvm_libs() {
-        println!("cargo:rustc-link-lib=static={}", lib);
-    }
-    for lib in get_llvm_system_libs() {
-        println!("cargo:rustc-link-lib=dylib={}", lib);
+        println!("cargo:rustc-link-search=native={}", get_llvm_libdir());
+        for lib in get_llvm_libs() {
+            println!("cargo:rustc-link-lib=static={}", lib);
+        }
+        for lib in get_llvm_system_libs() {
+            println!("cargo:rustc-link-lib=dylib={}", lib);
+        }
     }
 
     build.cpp(true);
