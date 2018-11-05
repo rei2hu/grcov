@@ -64,6 +64,8 @@ fn get_llvm_libdir() -> String {
 }
 
 fn main() {
+    let target = env::var("TARGET").expect("TARGET was not set");
+
     let mut build = cc::Build::new();
 
     if !cfg!(target_env = "msvc") {
@@ -90,6 +92,14 @@ fn main() {
         build.flag("-fno-builtin");
         build.flag("-fno-exceptions");
         build.flag("-std=c++11");
+    }
+
+    if target.contains("darwin") {
+        build.flag("-stdlib=libc++");
+        let cross_sysroot = env::var("CROSS_SYSROOT");
+        if let Ok(cross_sysroot) = cross_sysroot {
+          build.flag(&format!("-isysroot={}", cross_sysroot));
+        }
     }
 
     build.compile("libllvmgcov.a");
