@@ -68,6 +68,16 @@ fn main() {
 
     let mut build = cc::Build::new();
 
+    if target.contains("darwin") {
+        build.flag("-stdlib=libc++");
+        let cross_sysroot = env::var("CROSS_SYSROOT");
+        if let Ok(cross_sysroot) = cross_sysroot {
+          build.flag(&format!("-isysroot {}", cross_sysroot));
+          build.flag(&format!("-I{}/usr/include", cross_sysroot));
+          build.flag(&format!("-iframework {}/System/Library/Frameworks", cross_sysroot));
+        }
+    }
+
     if !cfg!(target_env = "msvc") {
         build.flag("-Wno-unused-parameter");
     }
@@ -92,16 +102,6 @@ fn main() {
         build.flag("-fno-builtin");
         build.flag("-fno-exceptions");
         build.flag("-std=c++11");
-    }
-
-    if target.contains("darwin") {
-        build.flag("-stdlib=libc++");
-        let cross_sysroot = env::var("CROSS_SYSROOT");
-        if let Ok(cross_sysroot) = cross_sysroot {
-          build.flag(&format!("-isysroot {}", cross_sysroot));
-          build.flag(&format!("-I{}/usr/include", cross_sysroot));
-          build.flag(&format!("-iframework {}/System/Library/Frameworks", cross_sysroot));
-        }
     }
 
     build.compile("libllvmgcov.a");
