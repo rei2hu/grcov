@@ -99,6 +99,8 @@ fn main() {
         let cross_sysroot = env::var("CROSS_SYSROOT");
         if let Ok(cross_sysroot) = cross_sysroot {
           build.flag(&format!("-isysroot={}", cross_sysroot));
+          build.flag(&format!("-I{}/usr/include", cross_sysroot));
+          build.flag(&format!("-iframework={}/System/Library/Frameworks", cross_sysroot));
         }
     }
 
